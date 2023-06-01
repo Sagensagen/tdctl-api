@@ -1,0 +1,76 @@
+version: "3.5"
+services:
+  tdctl_api:
+    image: ghcr.io/td-org-uit-no/tdctl-api/tdctl-api:latest
+    container_name: tdctl-api-production
+    user: "prod_user:prod_user"
+    build:
+      context: ../
+      dockerfile: .docker/dockerfile.api.production
+    volumes:
+      - ../db/seeds:/home/prod_user/db/seeds
+      - ../db/file_storage:/home/prod_user/db/file_storage
+
+      # mount .config as mail credentials cannot be on github
+      - ../.config:/home/prod_user/.config
+      # mount production files
+      - ../production_seed.py:/home/prod_user/production_seed.py
+    environment:
+      API_ENV: production
+      DB_USER: ${MONGODB_USER}
+      DB_PASSWORD: ${MONGODB_PASSWORD}
+      DB_HOSTNAME: ${HOSTNAME}
+      DB_PORT: ${PORT}
+      DB: ${DATABASE}
+      SECRET_KEY: ${SECRET_KEY}
+      FRONTEND_URL: ${FRONTEND_URL}
+      TZ: ${TZ}
+    networks:
+      - frontend
+      - backend
+    # provents processes from gaining additional privileges
+    security_opt:
+      - no-new-privileges:true
+
+  mongodb:
+    hostname: ${HOSTNAME}
+    image: mongo:latest
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASSWORD}
+      - MONGO_INITDB_DATABASE=${DATABASE}
+      - TZ=${TZ}
+    command: mongod --auth --port ${PORT}
+    volumes:
+      - ../db/db_data:/data/db
+    networks:
+      - backend
+
+  nginx:
+    build:
+      context: ../
+      dockerfile: .docker/dockerfile.nginx
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - frontend
+    volumes:
+      - ./certbot/data/certbot/conf:/etc/letsencrypt
+      - ./certbot/data/certbot/www:/var/www/certbot
+    command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./certbot/data/certbot/conf:/etc/letsencrypt
+      - ./certbot/data/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge

@@ -1,0 +1,102 @@
+# env:
+#   - name: "DB_HOSTNAME"
+#     value: "mongo://"
+#   - name: DB
+#     value: "mogngo-svc"
+#   - name: DB_PORT
+#     value: 27017
+#   - name: DB_PASSWORD
+#     value: cGFzc3dvcmQxMjM=
+#   - name: DB_USERNAME
+#     value: YWRtaW51c2Vy=
+# valueFrom:
+#   secretKeyRef:
+#     name: mongo-creds
+#     key: password
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "deploy.fullname" . }}
+  labels:
+    {{- include "deploy.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "deploy.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "deploy.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "deploy.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+        - name: td-mount-volume
+          persistentVolumeClaim:
+            claimName: td-mount
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodbrs
+                  key: mongodb-root-password
+            - name: "DB_HOSTNAME"
+              value: "mongo://"
+            - name: DB
+              value: "mogngo-svc"
+            - name: DB_PORT
+              value: "27017"
+            - name: DB_USERNAME
+              value: "root"
+            - name: API_ENV
+              value: "production"
+            - name: FRONTEND_URL
+              value: "k8s.td.org.uit.no"
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          volumeMounts:
+          - mountPath: "/data"
+            name: td-mount-volume
+
+          # livenessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

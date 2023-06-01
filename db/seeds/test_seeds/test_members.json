@@ -1,0 +1,47 @@
+[
+  {
+    "realName": "Test",
+    "email": "test@test.com",
+    "password": "pbkdf2:sha256:260000$vpuGwDvLJ5NRVb2S$da9eba7f81f5138e3fa1cdf855d41ce3971f55162208948cc1bc8b9d8d3495d7",
+    "classof": "2015",
+    "graduated": false,
+    "phone": "",
+    "status": "inactive",
+    "role": "member",
+    "penalty": 0
+  },
+  {
+    "realName": "First Lastname",
+    "email": "first@lastname.com",
+    "password": "pbkdf2:sha256:260000$vpuGwDvLJ5NRVb2S$da9eba7f81f5138e3fa1cdf855d41ce3971f55162208948cc1bc8b9d8d3495d7",
+    "classof": "2018",
+    "graduated": false,
+    "phone": "",
+    "status": "inactive",
+    "role": "member",
+    "penalty": 2
+  },
+  {
+      "realName": "Admin Adminsen",
+      "email" : "test_admin@test.com",
+      "password": "pbkdf2:sha256:260000$1omfX4tE3HPywu0R$f6c84936a3aa61a67f873fd2b47ca94c64c76bc7e1f81d77be222c68b60afb21",
+      "classof": "2018",
+      "graduated": false,
+      "phone": "12345678",
+      "status": "active",
+      "role": "admin",
+      "penalty": 0
+  },
+  {
+      "realName": "Second Admin",
+      "email" : "second_admin@test.com",
+      "password": "pbkdf2:sha256:260000$1omfX4tE3HPywu0R$f6c84936a3aa61a67f873fd2b47ca94c64c76bc7e1f81d77be222c68b60afb21",
+      "classof": "2018",
+      "graduated": false,
+      "phone": "87654321",
+      "status": "active",
+      "role": "admin",
+      "penalty": 0
+  }
+]
+

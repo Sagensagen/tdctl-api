@@ -1,0 +1,45 @@
+version: "3.5"
+name: backend
+services:
+  tdctl_api:
+    image: tdctl_api:latest
+    container_name: tdctl_api
+    volumes:
+      - ../:/app
+    build:
+      context: ../
+      dockerfile: .docker/dockerfile.api.development
+    environment:
+      DB_HOSTNAME: td_mongodb
+      DB_PORT: 26900
+      TEST_DB_HOSTNAME: test_mongodb
+      FRONTEND_URL: localhost:3000
+      TZ: Europe/Oslo
+    links:
+      - mongodb
+    depends_on:
+      - mongodb
+    ports:
+      - "5000:5000"
+    networks:
+      - backend
+
+  mongodb:
+    hostname: td_mongodb
+    container_name: mongodb_dev
+    image: mongo:latest
+    command: mongod --port 26900
+    restart: unless-stopped
+    ports:
+      - "26900:26900"
+    volumes:
+      - ../db/db_data:/data/db
+    networks:
+      - backend
+
+networks:
+  backend:
+    # ensures pytest_docker is always on the same network
+    name: docker_backend
+    external: false
+    driver: bridge

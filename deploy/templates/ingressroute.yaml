@@ -1,0 +1,42 @@
+# apiVersion: traefik.containo.us/v1alpha1
+# kind: Middleware
+# metadata:
+#   name: {{ template "deploy.fullname" . }}-strip
+#   labels:
+#     app: {{ template "deploy.fullname" . }}
+#     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+# spec:
+#   stripPrefix:
+#     prefixes:
+#       - {{ .Values.ingress.path }}
+# ---
+# apiVersion: traefik.containo.us/v1alpha1
+# kind: IngressRoute
+# metadata:
+#   name: {{ template "deploy.fullname" . }}
+#   labels:
+#     app: {{ template "deploy.fullname" . }}
+#     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+#     release: {{ .Release.Name }}
+#     heritage: {{ .Release.Service }}
+# spec:
+#   entryPoints:
+#   {{- if .Values.ingress.tls }}
+#     - websecure
+#   {{- else }}
+#     - web
+#   {{- end }}
+#   routes:
+#   - match: Host(`{{ .Values.ingress.hostname }}`) && PathPrefix(`{{ .Values.ingress.path }}`)
+#     kind: Rule
+#     services:
+#     - name: {{ template "deploy.fullname" . }}
+#       port: {{ .Values.service.port }}
+#     {{- if .Values.ingress.stripPrefix }}
+#     middlewares:
+#     - name: {{ template "deploy.fullname" . }}-strip
+#     {{- end}}
+#   {{- if .Values.ingress.tls }}
+#   tls:
+#     secretName: {{ .Values.ingress.secretname }}
+#   {{- end }}
